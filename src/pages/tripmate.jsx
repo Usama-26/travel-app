@@ -9,10 +9,17 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 
 export default function TripmateDetails() {
+  const [tripMate, setTripMate] = useState({});
+
   const router = useRouter();
+  useEffect(() => {
+    const data = JSON.parse(localStorage.getItem("tripMate"));
+    setTripMate(data);
+  }, []);
   return (
     <div className="container max-w-md mx-auto flex items-center">
       <div className="m-5 mt-20 w-full relative text-slate-800">
@@ -26,26 +33,21 @@ export default function TripmateDetails() {
         <div className="my-5">
           <div className=" flex gap-2 items-center">
             <Image
-              src={"/images/hunza.jpg"}
+              src={tripMate?.photoUrl}
               width={80}
               height={80}
               className=" self-start object-cover rounded-full aspect-square"
               alt="Trip Mate"
             />
             <div>
-              <h4 className="text-xl font-bold">{"Hi! I'm Jenny"}</h4>
-              <h4>Hamburg, Germany</h4>
+              <h4 className="text-xl font-bold">{`Hi! I'm ${tripMate.username}`}</h4>
+              <h4>{tripMate?.country}</h4>
             </div>
           </div>
         </div>
         <div className="my-5">
           <h3 className="text-lg font-bold my-2">About me</h3>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Ipsam harum
-            ad itaque praesentium quod, expedita illum? Quas odio corrupti quasi
-            eveniet neque itaque ratione sunt molestias. Architecto earum velit
-            explicabo.
-          </p>
+          <p>{tripMate?.bio}</p>
         </div>
 
         <div className="my-5">
@@ -54,16 +56,18 @@ export default function TripmateDetails() {
             {/* Fact */}
             <div className="p-4 w-1/3 text-sm rounded-lg text-center bg-slate-200">
               <GlobeEuropeAfricaIcon className="h-8 w-8 fill-slate-800 mx-auto" />
-              <span>10 countries visited</span>
+              <span>
+                {tripMate?.visitedCountries?.length} countries visited
+              </span>
             </div>
             <div className="p-4 w-1/3 text-sm rounded-lg text-center bg-slate-200">
               <ChevronDoubleUpIcon className="h-8 w-8 fill-slate-800 mx-auto" />
-              <span>3 Active Trips</span>
+              <span>{tripMate?.posts?.length} Active Trips</span>
             </div>
 
             <div className="p-4 w-1/3 text-sm rounded-lg text-center bg-slate-200">
               <MapPinIcon className="h-8 w-8 fill-slate-800 mx-auto" />
-              <span>Hamburg, Germany</span>
+              <span>{tripMate?.country}</span>
             </div>
           </div>
         </div>
