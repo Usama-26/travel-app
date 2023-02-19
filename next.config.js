@@ -10,6 +10,12 @@ const nextConfig = {
         // pathname: "/account123/**",
       },
     ],
+    domains: [
+      "res.cloudinary.com",
+      "media.istockphoto.com",
+      "upload.wikimedia.org",
+      "media.istockphoto.com",
+    ],
   },
 };
 

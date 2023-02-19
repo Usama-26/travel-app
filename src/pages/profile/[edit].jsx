@@ -1,213 +1,252 @@
+
 import { ArrowSmallLeftIcon } from "@heroicons/react/24/solid";
+import { changePasword } from "@/redux/auth/auth.actions";
+import { updateUserProfileRequest } from "@/redux/userDashboard/userDashboard.actions";
+import { EnvelopeIcon, ArrowSmallLeftIcon } from "@heroicons/react/24/solid";
 import Multiselect from "multiselect-react-dropdown";
 
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
 export default function Login() {
+  const user = useSelector(({ auth }) => auth.user);
   const router = useRouter();
-
+  const [err, setErr] = useState(false);
+  const dispatch = useDispatch();
+  const [data, setData] = useState({});
+  const handleData = (e, select, sname, svalue) => {
+    if (select) {
+      setData({ ...data, [sname]: svalue });
+    } else {
+      const { name, value } = e.target;
+      setData({ ...data, [name]: value });
+    }
+  };
   const countries = [
-    { name: "Afghanistan", code: "AF" },
-    { name: "Albania", code: "AL" },
-    { name: "Algeria", code: "DZ" },
-    { name: "American Samoa", code: "AS" },
-    { name: "AndorrA", code: "AD" },
-    { name: "Angola", code: "AO" },
-    { name: "Anguilla", code: "AI" },
-    { name: "Antarctica", code: "AQ" },
-    { name: "Argentina", code: "AR" },
-    { name: "Armenia", code: "AM" },
-    { name: "Australia", code: "AU" },
-    { name: "Austria", code: "AT" },
-    { name: "Azerbaijan", code: "AZ" },
-    { name: "Bahamas", code: "BS" },
-    { name: "Bahrain", code: "BH" },
-    { name: "Bangladesh", code: "BD" },
-    { name: "Barbados", code: "BB" },
-    { name: "Belarus", code: "BY" },
-    { name: "Belgium", code: "BE" },
-    { name: "Belize", code: "BZ" },
-    { name: "Benin", code: "BJ" },
-    { name: "Bermuda", code: "BM" },
-    { name: "Bhutan", code: "BT" },
-    { name: "Bolivia", code: "BO" },
-    { name: "Bosnia and Herzegovina", code: "BA" },
-    { name: "Brazil", code: "BR" },
-    { name: "Brunei Darussalam", code: "BN" },
-    { name: "Bulgaria", code: "BG" },
-    { name: "Burkina Faso", code: "BF" },
-    { name: "Burundi", code: "BI" },
-    { name: "Cambodia", code: "KH" },
-    { name: "Cameroon", code: "CM" },
-    { name: "Canada", code: "CA" },
-    { name: "Central African Republic", code: "CF" },
-    { name: "Chad", code: "TD" },
-    { name: "Chile", code: "CL" },
-    { name: "China", code: "CN" },
-    { name: "Colombia", code: "CO" },
-    { name: "Comoros", code: "KM" },
-    { name: "Congo", code: "CG" },
-    { name: "Costa Rica", code: "CR" },
-    { name: "Cote D'Ivoire", code: "CI" },
-    { name: "Croatia", code: "HR" },
-    { name: "Cuba", code: "CU" },
-    { name: "Cyprus", code: "CY" },
-    { name: "Czech Republic", code: "CZ" },
-    { name: "Denmark", code: "DK" },
-    { name: "Ecuador", code: "EC" },
-    { name: "Egypt", code: "EG" },
-    { name: "El Salvador", code: "SV" },
-    { name: "Equatorial Guinea", code: "GQ" },
-    { name: "Eritrea", code: "ER" },
-    { name: "Estonia", code: "EE" },
-    { name: "Ethiopia", code: "ET" },
-    { name: "Fiji", code: "FJ" },
-    { name: "Finland", code: "FI" },
-    { name: "France", code: "FR" },
-    { name: "French Guiana", code: "GF" },
-    { name: "French Polynesia", code: "PF" },
-    { name: "Gambia", code: "GM" },
-    { name: "Georgia", code: "GE" },
-    { name: "Germany", code: "DE" },
-    { name: "Ghana", code: "GH" },
-    { name: "Greece", code: "GR" },
-    { name: "Greenland", code: "GL" },
-    { name: "Grenada", code: "GD" },
-    { name: "Guatemala", code: "GT" },
-    { name: "Guinea", code: "GN" },
-    { name: "Guyana", code: "GY" },
-    { name: "Haiti", code: "HT" },
-    { name: "Honduras", code: "HN" },
-    { name: "Hong Kong", code: "HK" },
-    { name: "Hungary", code: "HU" },
-    { name: "Iceland", code: "IS" },
-    { name: "India", code: "IN" },
-    { name: "Indonesia", code: "ID" },
-    { name: "Iran, Islamic Republic Of", code: "IR" },
-    { name: "Iraq", code: "IQ" },
-    { name: "Ireland", code: "IE" },
-    { name: "Isle of Man", code: "IM" },
-    { name: "Israel", code: "IL" },
-    { name: "Italy", code: "IT" },
-    { name: "Jamaica", code: "JM" },
-    { name: "Japan", code: "JP" },
-    { name: "Jersey", code: "JE" },
-    { name: "Jordan", code: "JO" },
-    { name: "Kazakhstan", code: "KZ" },
-    { name: "Kenya", code: "KE" },
-    { name: "Kiribati", code: "KI" },
-    { name: "Korea, Democratic People'S Republic of", code: "KP" },
-    { name: "Korea, Republic of", code: "KR" },
-    { name: "Kuwait", code: "KW" },
-    { name: "Kyrgyzstan", code: "KG" },
-    { name: "Lao People'S Democratic Republic", code: "LA" },
-    { name: "Latvia", code: "LV" },
-    { name: "Lebanon", code: "LB" },
-    { name: "Lesotho", code: "LS" },
-    { name: "Liberia", code: "LR" },
-    { name: "Libyan Arab Jamahiriya", code: "LY" },
-    { name: "Liechtenstein", code: "LI" },
-    { name: "Lithuania", code: "LT" },
-    { name: "Luxembourg", code: "LU" },
-    { name: "Macao", code: "MO" },
-    { name: "Macedonia, The Former Yugoslav Republic of", code: "MK" },
-    { name: "Madagascar", code: "MG" },
-    { name: "Malawi", code: "MW" },
-    { name: "Malaysia", code: "MY" },
-    { name: "Maldives", code: "MV" },
-    { name: "Mali", code: "ML" },
-    { name: "Malta", code: "MT" },
-    { name: "Marshall Islands", code: "MH" },
-    { name: "Martinique", code: "MQ" },
-    { name: "Mauritania", code: "MR" },
-    { name: "Mauritius", code: "MU" },
-    { name: "Mayotte", code: "YT" },
-    { name: "Mexico", code: "MX" },
-    { name: "Micronesia, Federated States of", code: "FM" },
-    { name: "Moldova, Republic of", code: "MD" },
-    { name: "Monaco", code: "MC" },
-    { name: "Mongolia", code: "MN" },
-    { name: "Montserrat", code: "MS" },
-    { name: "Morocco", code: "MA" },
-    { name: "Mozambique", code: "MZ" },
-    { name: "Myanmar", code: "MM" },
-    { name: "Namibia", code: "NA" },
-    { name: "Nauru", code: "NR" },
-    { name: "Nepal", code: "NP" },
-    { name: "Netherlands", code: "NL" },
-    { name: "Netherlands Antilles", code: "AN" },
-    { name: "New Caledonia", code: "NC" },
-    { name: "New Zealand", code: "NZ" },
-    { name: "Nicaragua", code: "NI" },
-    { name: "Niger", code: "NE" },
-    { name: "Nigeria", code: "NG" },
-    { name: "Niue", code: "NU" },
-    { name: "Norfolk Island", code: "NF" },
-    { name: "Northern Mariana Islands", code: "MP" },
-    { name: "Norway", code: "NO" },
-    { name: "Oman", code: "OM" },
-    { name: "Pakistan", code: "PK" },
-    { name: "Palau", code: "PW" },
-    { name: "Palestinian Territory, Occupied", code: "PS" },
-    { name: "Panama", code: "PA" },
-    { name: "Papua New Guinea", code: "PG" },
-    { name: "Paraguay", code: "PY" },
-    { name: "Peru", code: "PE" },
-    { name: "Philippines", code: "PH" },
-    { name: "Poland", code: "PL" },
-    { name: "Portugal", code: "PT" },
-    { name: "Puerto Rico", code: "PR" },
-    { name: "Qatar", code: "QA" },
-    { name: "Reunion", code: "RE" },
-    { name: "Romania", code: "RO" },
-    { name: "Russian Federation", code: "RU" },
-    { name: "RWANDA", code: "RW" },
-    { name: "Saudi Arabia", code: "SA" },
-    { name: "Senegal", code: "SN" },
-    { name: "Serbia and Montenegro", code: "CS" },
-    { name: "Seychelles", code: "SC" },
-    { name: "Singapore", code: "SG" },
-    { name: "Slovakia", code: "SK" },
-    { name: "Slovenia", code: "SI" },
-    { name: "Somalia", code: "SO" },
-    { name: "South Africa", code: "ZA" },
-    { name: "Spain", code: "ES" },
-    { name: "Sri Lanka", code: "LK" },
-    { name: "Sudan", code: "SD" },
-    { name: "Swaziland", code: "SZ" },
-    { name: "Sweden", code: "SE" },
-    { name: "Switzerland", code: "CH" },
-    { name: "Syrian Arab Republic", code: "SY" },
-    { name: "Taiwan, Province of China", code: "TW" },
-    { name: "Tajikistan", code: "TJ" },
-    { name: "Tanzania, United Republic of", code: "TZ" },
-    { name: "Thailand", code: "TH" },
-    { name: "Togo", code: "TG" },
-    { name: "Tokelau", code: "TK" },
-    { name: "Tonga", code: "TO" },
-    { name: "Tunisia", code: "TN" },
-    { name: "Turkey", code: "TR" },
-    { name: "Turkmenistan", code: "TM" },
-    { name: "Turks and Caicos Islands", code: "TC" },
-    { name: "Tuvalu", code: "TV" },
-    { name: "Uganda", code: "UG" },
-    { name: "Ukraine", code: "UA" },
-    { name: "United Arab Emirates", code: "AE" },
-    { name: "United Kingdom", code: "GB" },
-    { name: "United States", code: "US" },
-    { name: "Uruguay", code: "UY" },
-    { name: "Uzbekistan", code: "UZ" },
-    { name: "Vanuatu", code: "VU" },
-    { name: "Venezuela", code: "VE" },
-    { name: "Viet Nam", code: "VN" },
-    { name: "Virgin Islands, British", code: "VG" },
-    { name: "Virgin Islands, U.S.", code: "VI" },
-    { name: "Western Sahara", code: "EH" },
-    { name: "Yemen", code: "YE" },
-    { name: "Zambia", code: "ZM" },
-    { name: "Zimbabwe", code: "ZW" },
+    "Afghanistan",
+    "Albania",
+    "Algeria",
+    "American Samoa",
+    "AndorrA",
+    "Angola",
+    "Anguilla",
+    "Antarctica",
+    "Argentina",
+    "Armenia",
+    "Australia",
+    "Austria",
+    "Azerbaijan",
+    "Bahamas",
+    "Bahrain",
+    "Bangladesh",
+    "Barbados",
+    "Belarus",
+    "Belgium",
+    "Belize",
+    "Benin",
+    "Bermuda",
+    "Bhutan",
+    "Bolivia",
+    "Bosnia and Herzegovina",
+    "Brazil",
+    "Brunei Darussalam",
+    "Bulgaria",
+    "Burkina Faso",
+    "Burundi",
+    "Cambodia",
+    "Cameroon",
+    "Canada",
+    "Central African Republic",
+    "Chad",
+    "Chile",
+    "China",
+    "Colombia",
+    "Comoros",
+    "Congo",
+    "Costa Rica",
+    "Cote D'Ivoire",
+    "Croatia",
+    "Cuba",
+    "Cyprus",
+    "Czech Republic",
+    "Denmark",
+    "Ecuador",
+    "Egypt",
+    "El Salvador",
+    "Equatorial Guinea",
+    "Eritrea",
+    "Estonia",
+    "Ethiopia",
+    "Fiji",
+    "Finland",
+    "France",
+    "French Guiana",
+    "French Polynesia",
+    "Gambia",
+    "Georgia",
+    "Germany",
+    "Ghana",
+    "Greece",
+    "Greenland",
+    "Grenada",
+    "Guatemala",
+    "Guinea",
+    "Guyana",
+    "Haiti",
+    "Honduras",
+    "Hong Kong",
+    "Hungary",
+    "Iceland",
+    "India",
+    "Indonesia",
+    "Iran, Islamic Republic Of",
+    "Iraq",
+    "Ireland",
+    "Isle of Man",
+    "Israel",
+    "Italy",
+    "Jamaica",
+    "Japan",
+    "Jersey",
+    "Jordan",
+    "Kazakhstan",
+    "Kenya",
+    "Kiribati",
+    "Korea, Democratic People'S Republic of",
+    "Korea, Republic of",
+    "Kuwait",
+    "Kyrgyzstan",
+    "Lao People'S Democratic Republic",
+    "Latvia",
+    "Lebanon",
+    "Lesotho",
+    "Liberia",
+    "Libyan Arab Jamahiriya",
+    "Liechtenstein",
+    "Lithuania",
+    "Luxembourg",
+    "Macao",
+    "Macedonia, The Former Yugoslav Republic of",
+    "Madagascar",
+    "Malawi",
+    "Malaysia",
+    "Maldives",
+    "Mali",
+    "Malta",
+    "Marshall Islands",
+    "Martinique",
+    "Mauritania",
+    "Mauritius",
+    "Mayotte",
+    "Mexico",
+    "Micronesia, Federated States of",
+    "Moldova, Republic of",
+    "Monaco",
+    "Mongolia",
+    "Montserrat",
+    "Morocco",
+    "Mozambique",
+    "Myanmar",
+    "Namibia",
+    "Nauru",
+    "Nepal",
+    "Netherlands",
+    "Netherlands Antilles",
+    "New Caledonia",
+    "New Zealand",
+    "Nicaragua",
+    "Niger",
+    "Nigeria",
+    "Niue",
+    "Norfolk Island",
+    "Northern Mariana Islands",
+    "Norway",
+    "Oman",
+    "Pakistan",
+    "Palau",
+    "Palestinian Territory, Occupied",
+    "Panama",
+    "Papua New Guinea",
+    "Paraguay",
+    "Peru",
+    "Philippines",
+    "Poland",
+    "Portugal",
+    "Puerto Rico",
+    "Qatar",
+    "Reunion",
+    "Romania",
+    "Russian Federation",
+    "RWANDA",
+    "Saudi Arabia",
+    "Senegal",
+    "Serbia and Montenegro",
+    "Seychelles",
+    "Singapore",
+    "Slovakia",
+    "Slovenia",
+    "Somalia",
+    "South Africa",
+    "Spain",
+    "Sri Lanka",
+    "Sudan",
+    "Swaziland",
+    "Sweden",
+    "Switzerland",
+    "Syrian Arab Republic",
+    "Taiwan, Province of China",
+    "Tajikistan",
+    "Tanzania, United Republic of",
+    "Thailand",
+    "Togo",
+    "Tokelau",
+    "Tonga",
+    "Tunisia",
+    "Turkey",
+    "Turkmenistan",
+    "Turks and Caicos Islands",
+    "Tuvalu",
+    "Uganda",
+    "Ukraine",
+    "United Arab Emirates",
+    "United Kingdom",
+    "United States",
+    "Uruguay",
+    "Uzbekistan",
+    "Vanuatu",
+    "Venezuela",
+    "Viet Nam",
+    "Virgin Islands, British",
+    "Virgin Islands, U.S.",
+    "Western Sahara",
+    "Yemen",
+    "Zambia",
+    "Zimbabwe",
   ];
+  const updateProfile = (e) => {
+    e.preventDefault();
+    console.log("called from updateProfile", data);
+    console.log(data.newPass !== data.confirmNewPass);
+    if (router.query.name === "password") {
+      if (data.newPass !== data.confirmNewPass) {
+        setErr(true);
+      } else {
+        const payload = {
+          userId: user.id,
+          oldPassword: data.password,
+          newPassword: data.confirmNewPass,
+        };
+        console.log(payload, data);
+        dispatch(changePasword(payload));
+      }
+    } else dispatch(updateUserProfileRequest(data, user.id, () => {}));
+  };
 
+  useEffect(() => {
+    if (user)
+      setData({ ...data, [router.query.name]: user[router.query.name] });
+  }, [user]);
   return (
     <div className="container max-w-md mx-auto flex items-center">
       <div className="m-5 mt-20 w-full relative text-slate-800">
@@ -222,7 +261,7 @@ export default function Login() {
           {router.query.name}
         </h1>
         <div className="mb-12">
-          <form>
+          <form onSubmit={updateProfile}>
             {router.query.name === "password" ? (
               <>
                 <label
@@ -238,6 +277,7 @@ export default function Login() {
                     name={router.query.name}
                     placeholder={router.query.name}
                     className="input-field"
+                    onChange={handleData}
                   />
                 </div>
                 <div className="relative mb-6">
@@ -250,6 +290,7 @@ export default function Login() {
                     name={"newPass"}
                     placeholder={"New Password"}
                     className="input-field"
+                    onChange={handleData}
                   />
                 </div>
                 <div className="relative mb-6">
@@ -264,8 +305,17 @@ export default function Login() {
                     id={"confirmNewPass"}
                     name={"confirmNewPass"}
                     placeholder={"Confirm Password"}
+                    onChange={(e) => {
+                      setErr(false);
+                      handleData(e);
+                    }}
                     className="input-field"
                   />
+                  {err && (
+                    <div className="text-red-400">
+                      confirm password should match
+                    </div>
+                  )}
                 </div>
               </>
             ) : router.query.type === "select" ? (
@@ -277,7 +327,15 @@ export default function Login() {
                   {router.query.name}
                 </label>
                 <div className="relative mb-6">
-                  <Multiselect options={countries} displayValue="name" />
+                  <Multiselect
+                    options={countries}
+                    displayValue="name"
+                    selectedValues={data[router.query.name]}
+                    isObject={false}
+                    onSelect={(val) =>
+                      handleData("", true, router.query.name, val)
+                    }
+                  />
                 </div>
               </>
             ) : (
@@ -293,14 +351,17 @@ export default function Login() {
                     type={router.query.name}
                     id={router.query.name}
                     name={router.query.name}
+                    value={data[router.query.name]}
                     placeholder={router.query.name}
                     className="input-field"
+                    onChange={handleData}
                   />
                 </div>
               </>
             )}
 
             <button
+              type="submit"
               className={`btn-primary mb-6  bg-blue-500 hover:bg-blue-600 active:bg-blue-700 focus:outline-none text-white`}
             >
               Save
