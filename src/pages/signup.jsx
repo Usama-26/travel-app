@@ -7,6 +7,8 @@ import {
   ArrowSmallLeftIcon,
 } from "@heroicons/react/24/solid";
 import { useRouter } from "next/router";
+import { useDispatch } from "react-redux";
+import { userSignUpRequest } from "@/redux/auth/auth.actions";
 
 export default function Signup() {
   const styles = {
@@ -16,7 +18,9 @@ export default function Signup() {
   };
   const [signupData, setSignupData] = useState({});
   const [formStep, setFormStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const nextStep = () => {
     setFormStep((prev) => prev + 1);
@@ -38,8 +42,20 @@ export default function Signup() {
 
     setSignupData((prev) => ({ ...signupData, [name]: value }));
   };
-  const handleFormSubmit = function () {
-    console.log("Your Information :", signupData);
+  const handleLoading = () => {
+    setLoading(false);
+  };
+  const handleFormSubmit = function (e) {
+    e.preventDefault();
+    const payload = {
+      email: signupData.email,
+      password: signupData.password,
+      birthDate: signupData.dob,
+      username: signupData.username,
+    };
+    console.log("signup called");
+    setLoading(true);
+    dispatch(userSignUpRequest(payload, handleLoading));
   };
 
   return (
@@ -59,9 +75,9 @@ export default function Signup() {
                 (formStep === 3 && "Enter your Birthday") ||
                 (formStep === 4 && "User Agreement")}
             </h1>
-            <form className="overflow-hidden">
+            <form className="overflow-hidden" onSubmit={handleFormSubmit}>
               <div
-                className={`w-full absolute top-20 translate-x-full transition duration-300 ease-in-out ${
+                className={`w-full absolute top-20 transition duration-300 ease-in-out ${
                   (formStep === 1 && "translate-x-0") ||
                   (formStep >= 1 && "-translate-x-full hidden")
                 }`}
@@ -100,7 +116,7 @@ export default function Signup() {
                 </div>
               </div>
               <div
-                className={`w-full absolute top-20 translate-x-full transition duration-300 ease-in-out ${
+                className={`w-full absolute top-20 transition duration-300 ease-in-out ${
                   (formStep === 2 && "translate-x-0") ||
                   (formStep >= 2 && "-translate-x-full hidden") ||
                   (formStep <= 2 && "translate-x-full hidden")
@@ -242,7 +258,6 @@ export default function Signup() {
                 className={`btn-primary mt-48 mb-6 ${styles["btn-active"]} ${
                   formStep === 4 ? "block" : "hidden"
                 }`}
-                onClick={handleFormSubmit}
               >
                 Submit
               </button>

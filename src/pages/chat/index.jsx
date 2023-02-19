@@ -1,3 +1,6 @@
+import chatsRepository from "@/repositories/chatsRepository";
+import socket from "@/socket";
+import Conversation from "@/src/components/Conversation";
 import Navbar from "@/src/components/Navbar";
 import {
   ArrowSmallLeftIcon,
@@ -5,8 +8,33 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 export default function Chat() {
+  const { user, isLoggedIn } = useSelector(({ auth }) => auth);
+  const [chats, setChats] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const getChats = async () => {
+      try {
+        const { result } = await chatsRepository.getUserChats(user.id);
+        setChats(result);
+        console.log(result);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    user && getChats();
+    if (!isLoggedIn) {
+      router.push("/login");
+    }
+  }, [user]);
+
   return (
     <div className="container max-w-md mx-auto flex items-center">
       <div className="m-5 mt-20 w-full  relative text-slate-800">
@@ -19,69 +47,24 @@ export default function Chat() {
         {/* Not Logged In */}
         {/* <Login /> */}
         <div className="my-4">
-          <div className="flex my-2 rounded-lg shadow-[1px_1px_5px_#000000] shadow-gray-300">
-            <Link href="/chat/chatId">
-              <div className="flex items-center justify-between p-4 gap-4">
-                <Image
-                  src={"/images/hunza.jpg"}
-                  width={50}
-                  height={50}
-                  className="rounded-full self-start object-cover aspect-square"
-                  alt="User Image"
-                />
-                <div>
-                  <h4 className="font-medium text-base my-1">
-                    Melina - Enjoy the sun
-                  </h4>
-                  <p>
-                    Hi Melina, you still searcing for a tripmate for spain...
-                  </p>
-                </div>
-              </div>
+          {chats?.map((chat, key) => (
+            <Link
+              key={key}
+              href={`/chat/${encodeURIComponent(JSON.stringify(chat))}`}
+            >
+              <Conversation
+                data={
+                  chat.senderId.id == user?.id ? chat.receiverId : chat.senderId
+                }
+                unreadCount={
+                  chat.senderId.id == user?.id
+                    ? chat?.senderCount
+                    : chat?.receiverCount
+                }
+                chatId={chat?.id}
+              ></Conversation>
             </Link>
-          </div>
-          <div className="flex my-2 rounded-lg shadow-[1px_1px_5px_#000000] shadow-gray-300">
-            <Link href="/chat/chatId">
-              <div className="flex items-center justify-between p-4 gap-4">
-                <Image
-                  src={"/images/hunza.jpg"}
-                  width={50}
-                  height={50}
-                  className="rounded-full self-start object-cover aspect-square"
-                  alt="User Image"
-                />
-                <div>
-                  <h4 className="font-medium text-base my-1">
-                    Melina - Enjoy the sun
-                  </h4>
-                  <p>
-                    Hi Melina, you still searcing for a tripmate for spain...
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </div>
-          <div className="flex my-2 rounded-lg shadow-[1px_1px_5px_#000000] shadow-gray-300">
-            <Link href="/chat/chatId">
-              <div className="flex items-center justify-between p-4 gap-4">
-                <Image
-                  src={"/images/hunza.jpg"}
-                  width={50}
-                  height={50}
-                  className="rounded-full self-start object-cover aspect-square"
-                  alt="User Image"
-                />
-                <div>
-                  <h4 className="font-medium text-base my-1">
-                    Melina - Enjoy the sun
-                  </h4>
-                  <p>
-                    Hi Melina, you still searcing for a tripmate for spain...
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </div>
+          ))}
         </div>
       </div>
       <Navbar />

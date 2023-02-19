@@ -1,4 +1,11 @@
 import { distDir } from "@/next.config";
+import {
+  postTripRequest,
+  remomvePostDraft,
+  removeTripRequest,
+  updateTripRequest,
+} from "@/redux/userDashboard/userDashboard.actions";
+import { uploadImage } from "@/src/components/ImageUpload";
 import { Switch } from "@headlessui/react";
 import { ArrowUpIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import {
@@ -8,16 +15,21 @@ import {
 
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import Datepicker from "react-tailwindcss-datepicker";
 export default function PID() {
   const [tripData, setTripData] = useState({});
-  const [girlsOnly, setGirlsOnly] = useState(false);
+  const [girlsOnly, setGirlsOnly] = useState(tripData.isGirlOnly);
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [delLoading, setDelLoading] = useState(false);
+  const dispatch = useDispatch();
   const [tripDate, setTripDate] = useState({
     startDate: new Date(),
-    endDate: new Date().setDate(new Date().getDate() + 1),
+    endDate: new Date(),
   });
+
   const handleDateChange = (newDate) => {
     setTripDate(newDate);
   };
@@ -29,35 +41,75 @@ export default function PID() {
     }
     setTripData((prev) => ({ ...prev, [name]: value }));
   };
-
-  const handleTripSubmit = (e) => {
-    e.preventDefault();
-    setTripData((prev) => ({
-      ...prev,
-      girlsOnly: girlsOnly,
-      tripDates: tripDate,
-    }));
+  const uploadImages = async () => {
+    return new Promise((resolve, reject) =>
+      uploadImage(Array.from(tripData.tripGallery), (url, success) => {
+        if (success) {
+          console.log(url);
+          resolve(url);
+        } else {
+          reject(url);
+        }
+      })
+    );
   };
-  console.log(tripData);
+  const handleLoading = () => {
+    setLoading(false);
+  };
+  const handleDelLoading = () => {
+    setDelLoading(false);
+  };
+  const handleTripSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const picsData = tripData.tripGallery && (await uploadImages());
+    const payload = {
+      title: tripData.title,
+      preferedStay: tripData.preferedStay,
+      tripType: tripData.tripType,
+      location: tripData.location,
+      description: tripData.description,
+      pictures: picsData ? picsData : tripData.pictures,
+      startDate: tripDate.startDate,
+      endDate: tripDate.endDate,
+      isGirlOnly: girlsOnly,
+    };
+
+    console.log(payload, tripData.draft);
+
+    if (tripData.draft) {
+      let updated = { ...payload, ["userId"]: tripData.userId };
+      console.log(tripData.index);
+      dispatch(postTripRequest(updated, handleLoading, true, tripData.index));
+    } else dispatch(updateTripRequest(tripData.id, payload, handleLoading));
+  };
 
   const handleDeletePost = (e) => {
     e.preventDefault();
-    setTripData({});
-    setGirlsOnly(false);
-    setTripDate({
-      startDate: new Date(),
-      endDate: new Date().setDate(new Date().getDate() + 1),
-    });
-    router.back();
+    setDelLoading(true);
+    console.log(tripData.draft, tripData.index);
+    tripData.draft
+      ? dispatch(remomvePostDraft(tripData.index))
+      : dispatch(removeTripRequest(tripData.id, handleDelLoading));
   };
+  useEffect(() => {
+    const post = JSON.parse(localStorage.getItem("postData"));
+    setGirlsOnly(post.isGirlOnly);
+    setTripData(post);
+    setTripDate({
+      ...tripDate,
+      startDate: new Date(post.startDate),
+      endDate: new Date(post.endDate),
+    });
+  }, []);
 
   return (
     <div className="container max-w-md mx-auto flex items-center">
       <div className="m-5 mt-20 w-full text-slate-800 ">
         <div className="font-medium flex gap-4">
-          <button onClick={() => router.back()}>
+          <Link href={"/activitys"}>
             <ArrowSmallLeftIcon className="w-6 h-6 fill-slate-800" />
-          </button>
+          </Link>
           <span>Edit Trip</span>
         </div>
         <div className="my-12">
@@ -70,6 +122,7 @@ export default function PID() {
                 type="text"
                 id="title"
                 name="title"
+                value={tripData.title}
                 className={`input-field`}
                 placeholder="Trip Title"
                 onChange={handleTripData}
@@ -102,6 +155,7 @@ export default function PID() {
                 type="text"
                 id="location"
                 name="location"
+                value={tripData.location}
                 className={`input-field`}
                 placeholder="Enter City/Region"
                 onChange={handleTripData}
@@ -115,7 +169,8 @@ export default function PID() {
             <div className="relative mb-6">
               <textarea
                 id="details"
-                name="details"
+                name="description"
+                value={tripData.description}
                 className={`input-field resize-none`}
                 placeholder="Describe your text with max 1000 characters"
                 onChange={handleTripData}
@@ -133,9 +188,10 @@ export default function PID() {
               <label htmlFor="hotel" className="styled-label">
                 <input
                   type="radio"
-                  name="stay"
+                  name="preferedStay"
                   id="hotel"
-                  value={"hotel"}
+                  checked={tripData.preferedStay === "Hotel"}
+                  value={"Hotel"}
                   className="hidden"
                   onChange={handleTripData}
                 />
@@ -144,8 +200,9 @@ export default function PID() {
               <label htmlFor="hostel" className="styled-label">
                 <input
                   type="radio"
-                  name="stay"
-                  value={"hostel"}
+                  checked={tripData.preferedStay == "Hostel"}
+                  name="preferedStay"
+                  value={"Hostel"}
                   id="hostel"
                   className="hidden"
                   onChange={handleTripData}
@@ -155,9 +212,10 @@ export default function PID() {
               <label htmlFor="bnb" className="styled-label">
                 <input
                   type="radio"
-                  name="stay"
+                  name="preferedStay"
+                  checked={tripData.preferedStay == "BnB"}
                   id="bnb"
-                  value={"bnb"}
+                  value={"BnB"}
                   className="hidden"
                   onChange={handleTripData}
                 />
@@ -172,20 +230,29 @@ export default function PID() {
               <select
                 id="tripType"
                 name="tripType"
+                value={tripData.tripType}
                 className={`input-field`}
                 onChange={handleTripData}
                 required
               >
-                <option value="vacation">Vacation</option>
-                <option value="business_trip">Buiness Trip</option>
+                <option value="Backpacking">Backpacking</option>
+                <option value="Roadtrip">Roadtrip</option>
+                <option value="Vocation">Vocation</option>
+                <option value="Work&Travel">Work&Travel</option>
+                <option value="Remotework">Remotework</option>
               </select>
               {/* <InformationCircleIcon className="w-5 h-5 absolute right-5 top-5 fill-red-600" /> */}
             </div>
 
             <div className="relative mb-3 pb-3 border-b border-b-gray-300 flex items-center justify-center gap-4 font-medium">
               <span>
-                {tripData && tripData?.tripGallery?.length > 0
-                  ? `${tripData?.tripGallery?.length} Photos Selected`
+                {(tripData && tripData?.tripGallery?.length > 0) ||
+                tripData?.pictures?.length > 0
+                  ? `${
+                      tripData?.tripGallery?.length > 0
+                        ? tripData?.tripGallery?.length
+                        : tripData?.pictures?.length
+                    } Photos Selected`
                   : `Select upto 5 Photos`}
               </span>
               <label
@@ -224,15 +291,59 @@ export default function PID() {
               <button
                 className={`btn-primary mb-6 inline-flex gap-2 items-center justify-center`}
               >
-                <ArrowUpIcon className="w-6 h-6 stroke-2 stroke-slate-700" />
-                <span>Post</span>
+                {loading ? (
+                  <svg
+                    aria-hidden="true"
+                    role="status"
+                    className="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600"
+                    viewBox="0 0 100 101"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                      fill="currentColor"
+                    />
+                    <path
+                      d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                      fill="#1C64F2"
+                    />
+                  </svg>
+                ) : (
+                  <>
+                    <ArrowUpIcon className="w-6 h-6 stroke-2 stroke-slate-700" />
+                    <span>{tripData.draft ? "post" : "update"}</span>
+                  </>
+                )}
               </button>
               <button
                 onClick={handleDeletePost}
                 className={`btn-primary mb-6 bg-red-600 text-white  inline-flex gap-2 items-center justify-center`}
               >
-                <XMarkIcon className="w-6 h-6 stroke-2 stroke-white" />
-                <span>Delete</span>
+                {delLoading ? (
+                  <svg
+                    aria-hidden="true"
+                    role="status"
+                    className="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600"
+                    viewBox="0 0 100 101"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                      fill="currentColor"
+                    />
+                    <path
+                      d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                      fill="#1C64F2"
+                    />
+                  </svg>
+                ) : (
+                  <>
+                    <XMarkIcon className="w-6 h-6 stroke-2 stroke-white" />
+                    <span>Delete</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
